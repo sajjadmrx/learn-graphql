@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken'
 import {User} from "../interfaces/user.interface";
 import {AuthRegisterInput} from "./inputs/register.input";
 import {AuthLoginInput} from "./inputs/login.input";
+import {Jwt} from "../interfaces/jwt.interface";
 
 
 @Service()
@@ -38,7 +39,11 @@ class AuthResolver {
             }
         });
 
-        return {token: createTokenAndGet(user.id)}
+        const jwtDB: Jwt = await this.createJwt(user.id)
+
+        return {
+            token: createTokenAndGet(jwtDB.id)
+        }
     }
 
 
@@ -57,9 +62,20 @@ class AuthResolver {
         if (!checkPassword)
             throw new Error("INVALID PASSWORD OR USERNAME");
 
+        const jwtDB: Jwt = await this.createJwt(user.id)
 
-        return {token: createTokenAndGet(user.id)}
+        return {
+            token: createTokenAndGet(jwtDB.id)
+        }
 
+    }
+
+    private async createJwt(userId: number): Promise<Jwt> {
+        return this.prisma.jwt.create({
+            data: {
+                userId: userId
+            }
+        })
     }
 }
 
@@ -67,7 +83,7 @@ class AuthResolver {
 function createTokenAndGet(userKey: number) {
     return jwt.sign({
         userKey: userKey
-    }, "JWT-SECRET",)
+    }, "JWT-SECRET")
 
 
 }
