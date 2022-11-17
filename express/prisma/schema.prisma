@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model categoriesonposts {
+  postId     Int
+  categoryId Int
+  assignedAt DateTime @default(now())
+  category   category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "CategoriesOnPosts_categoryId_fkey")
+  post       post     @relation(fields: [postId], references: [id], onDelete: Cascade, map: "CategoriesOnPosts_postId_fkey")
+
+  @@id([postId, categoryId])
+  @@index([categoryId], map: "CategoriesOnPosts_categoryId_fkey")
+}
+
+model category {
+  id                Int                 @id @unique(map: "Category_id_key") @default(autoincrement())
+  name              String
+  slug              String              @unique(map: "Category_slug_key")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  categoriesonposts categoriesonposts[]
+}
+
+model comment {
+  id            Int       @id @default(autoincrement())
+  text          String
+  authorId      Int
+  postId        Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  replyId       Int?
+  user          user      @relation(fields: [authorId], references: [id], onDelete: Cascade, map: "Comment_authorId_fkey")
+  post          post      @relation(fields: [postId], references: [id], onDelete: Cascade, map: "Comment_postId_fkey")
+  comment       comment?  @relation("commentTocomment", fields: [replyId], references: [id], onDelete: Cascade, map: "Comment_replyId_fkey")
+  other_comment comment[] @relation("commentTocomment")
+
+  @@index([authorId], map: "Comment_authorId_fkey")
+  @@index([postId], map: "Comment_postId_fkey")
+  @@index([replyId], map: "Comment_replyId_fkey")
+}
+
+model post {
+  id                Int                 @id @default(autoincrement())
+  title             String
+  content           String
+  authorId          Int
+  published         Boolean
+  cover             String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tags              String              @default("[]")
+  user              user                @relation(fields: [authorId], references: [id], onDelete: Cascade, map: "Post_authorId_fkey")
+  categoriesonposts categoriesonposts[]
+  comment           comment[]
+
+  @@index([authorId], map: "Post_authorId_fkey")
+}
+
+model user {
+  username  String    @unique(map: "User_username_key")
+  email     String    @unique(map: "User_email_key")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  id        Int       @id @default(autoincrement())
+  password  String
+  role      user_role @default(USER)
+  comment   comment[]
+  post      post[]
+}
+
+enum user_role {
+  ADMIN
+  MANAGE_POSTS
+  MANAGE_COMMENTS
+  USER
+}
