@@ -1,8 +1,10 @@
-import {Arg, Field, InputType, Mutation, Query, Resolver} from "type-graphql";
-import {PrismaClient, Prisma} from "@prisma/client";
+import {Arg, Authorized, Ctx, Field, InputType, Mutation, Query, Resolver, Root} from "type-graphql";
+import {PrismaClient, Prisma, user_role} from "@prisma/client";
 import {PostType} from "./post.type";
 import {Inject, Service} from "typedi";
 import {PostCreateInput} from "./inputs/create.input";
+import {MyContext} from "../interfaces/context.interface";
+import {UserRoleType} from "../interfaces/user.interface";
 
 
 @Service()
@@ -22,8 +24,10 @@ class PostsResolver {
         })
     }
 
+
+    @Authorized<UserRoleType>(["ADMIN", "MANAGE_POSTS"])
     @Mutation(returns => PostType)
-    async createPost(@Arg("data") args: PostCreateInput): Promise<PostType> {
+    async createPost(@Arg("data") args: PostCreateInput, @Ctx() {user}: MyContext): Promise<PostType> {
         try {
 
             let tags = args.tags;
@@ -32,7 +36,7 @@ class PostsResolver {
             return await this.prisma.post.create({
                 data: {
                     ...args,
-                    authorId: 12,
+                    authorId: user.id,
                 },
                 include: {
                     user: true
