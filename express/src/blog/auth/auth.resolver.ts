@@ -5,30 +5,9 @@ import {TokenType} from "./auth.type";
 import * as bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken'
 import {User} from "../interfaces/user.interface";
+import {AuthRegisterInput} from "./inputs/register.input";
+import {AuthLoginInput} from "./inputs/login.input";
 
-@InputType({description: "Signup data"})
-class AuthRegister {
-    @Field(type => String, {nullable: false})
-    email: string
-
-    @Field(type => String, {nullable: false})
-    username: string
-
-    @Field(type => String, {nullable: false})
-    password: string
-}
-
-
-@InputType({description: "SignIn data"})
-class AuthLogin {
-
-    @Field(type => String, {nullable: false})
-    username: string
-
-    @Field(type => String, {nullable: false})
-    password: string
-
-}
 
 @Service()
 @Resolver()
@@ -39,7 +18,7 @@ class AuthResolver {
 
 
     @Mutation(returns => TokenType)
-    async register(@Arg("data") args: AuthRegister): Promise<TokenType> {
+    async register(@Arg("data") args: AuthRegisterInput): Promise<TokenType> {
         const usersCount: number = await this.prisma.user.count({
             where: {
                 OR: [{email: args.email}, {username: args.username}]
@@ -64,7 +43,7 @@ class AuthResolver {
 
 
     @Mutation(returns => TokenType)
-    async login(@Arg("data") args: AuthLogin): Promise<TokenType> {
+    async login(@Arg("data") args: AuthLoginInput): Promise<TokenType> {
         const user: User | undefined = await this.prisma.user.findUnique({
             where: {
                 username: args.username
