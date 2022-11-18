@@ -24,6 +24,18 @@ class PostsResolver {
         })
     }
 
+    @Query((returns) => PostType)
+    async findPostById(@Arg('postId') postId: number) {
+        return this.prisma.post.findUnique({
+            where: {
+                id: postId
+            },
+            include: {
+                user: true
+            }
+        })
+
+    }
 
     @Authorized<UserRoleType>(["ADMIN", "MANAGE_POSTS"])
     @Mutation(returns => PostType)
